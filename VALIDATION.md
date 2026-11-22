@@ -31,3 +31,16 @@ the test containers. No live transfer or network configuration was performed.
   and its UUID is readable as UID 65534 inside the installed app. No mount, restart,
   data transfer or disk write was used for this inspection.
 - Internal storage is an explicit option; upgrades retain dedicated mode until chosen.
+
+## 0.1.2 — timestamped logs and receiving activity
+
+- 15 isolated unit tests pass, including timestamp offsets, bounded activity,
+  continued event sequences, worker interruption, partial snapshots and safe log
+  messages without raw SSH diagnostics.
+- Real SSH/rsync container acceptance passes: probe, dry-run, first copy, updates,
+  deletions, confinement and host-key pinning. Tests confirm planning/receiving
+  activity and parse real sender progress; only the filesystem UUID is mocked.
+- Chrome desktop/mobile setup and receiving-activity checks pass with fake data.
+- AMD64/ARM64 builds, Ruff and Git whitespace checks pass.
+- No live HA access, configuration edits, restarts or transfer operations were
+  performed. The current user-started backup remains untouched.

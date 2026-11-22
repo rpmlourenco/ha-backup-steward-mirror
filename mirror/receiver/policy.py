@@ -4,12 +4,14 @@ import copy
 import re
 import uuid
 from pathlib import Path, PurePosixPath
+from zoneinfo import ZoneInfo
 
 from .keys import public_key
 
 DEFAULTS = {
     "enabled": False,
     "label": "Lisboa",
+    "timezone": "Europe/Madrid",
     "mount": "/media/mirror",
     "storage_mode": "dedicated",
     "uuid": "",
@@ -27,6 +29,7 @@ def validate(raw):
         raise ValueError("Ativar receção deve ser um interruptor.")
     if cfg["storage_mode"] not in ("dedicated", "internal"):
         raise ValueError("Escolhe disco dedicado ou armazenamento interno.")
+    ZoneInfo(cfg["timezone"])
     if not isinstance(cfg["label"], str) or not 1 <= len(cfg["label"]) <= 60:
         raise ValueError("Indica um nome para este destino.")
     path = PurePosixPath(cfg["mount"])

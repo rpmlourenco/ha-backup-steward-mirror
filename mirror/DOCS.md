@@ -21,3 +21,10 @@ conserva os ficheiros remotos; alterações de configuração nesta app exigem o
 reinício manual indicado na interface.
 
 Consulta o README do repositório para instalação, restrições e aceitação HAOS.
+
+## Registos e atividade
+
+O fuso horário dos registos é configurável na interface. Os logs incluem data, hora
+e offset; a atividade por origem mostra comparação/receção, início, duração e eventos
+recentes. Os contadores de bytes, ritmo e ETA estão no Steward emissor. O histórico
+da interface é limitado e volátil; os logs da app ficam no Supervisor.

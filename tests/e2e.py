@@ -5,6 +5,7 @@ No host disks, device files, HA paths, HA APIs or network ports are mapped.
 """
 
 import asyncio
+import json
 import os
 from pathlib import Path
 import socket
@@ -79,13 +80,9 @@ async def main():
             encoding="utf-8",
         )
         config_path = service.RUN / "sshd_config"
-        text = config_path.read_text(encoding="utf-8").replace(
-            "/app/receive.py", str(wrapper)
-        )
+        text = config_path.read_text(encoding="utf-8").replace("/app/receive.py", str(wrapper))
         config_path.write_text(text, encoding="utf-8")
-        process = subprocess.Popen(
-            ["/usr/sbin/sshd", "-D", "-e", "-f", str(config_path)]
-        )
+        process = subprocess.Popen(["/usr/sbin/sshd", "-D", "-e", "-f", str(config_path)])
         try:
             for _ in range(100):
                 try:
@@ -122,19 +119,23 @@ async def main():
             assert plan.bytes > 0
             target = Path(destination) / "immich"
             assert not (target / "photo.jpg").exists(), "dry run wrote a file"
-            await execute(rsync_args(sender, mirror.directory, item))
-            assert (target / "photo.jpg").read_bytes() == (
-                source / "photo.jpg"
-            ).read_bytes()
-            (source / "document.txt").write_text(
-                "segunda versão mais longa", encoding="utf-8"
-            )
+            snapshot = json.loads(Path("/run/mirror/activity/immich.json").read_text(encoding="utf-8"))
+            assert snapshot["operation"] == "planning"
+            from steward.l4_progress import Progress
+
+            sender_progress = Progress()
+            await execute(rsync_args(sender, mirror.directory, item), progress=sender_progress.feed)
+            assert sender_progress.finish()["bytes"] > 0
+            snapshot = json.loads(Path("/run/mirror/activity/immich.json").read_text(encoding="utf-8"))
+            assert snapshot["operation"] == "receiving" and snapshot["status"] == "success"
+            assert isinstance(snapshot["elapsed_seconds"], int)
+            assert snapshot["events"][-1]["kind"] == "receiving_completed"
+            assert (target / "photo.jpg").read_bytes() == (source / "photo.jpg").read_bytes()
+            (source / "document.txt").write_text("segunda versão mais longa", encoding="utf-8")
             (source / "photo.jpg").unlink()
             await execute(rsync_args(sender, mirror.directory, item))
             assert not (target / "photo.jpg").exists()
-            assert (target / "document.txt").read_text(
-                encoding="utf-8"
-            ) == "segunda versão mais longa"
+            assert (target / "document.txt").read_text(encoding="utf-8") == "segunda versão mais longa"
             # Arbitrary commands and pull/read mode are refused.
             for command in (
                 "touch /tmp/mirror_escape",
@@ -142,8 +143,7 @@ async def main():
             ):
                 try:
                     await execute(
-                        ssh_args(sender, mirror.directory, "immich")
-                        + ["mirror_immich@127.0.0.1", command]
+                        ssh_args(sender, mirror.directory, "immich") + ["mirror_immich@127.0.0.1", command]
                     )
                 except ValueError:
                     pass
@@ -176,8 +176,7 @@ async def main():
             mirror.prepare(dict(sender, host_key=wrong_public))
             try:
                 await execute(
-                    ssh_args(sender, mirror.directory, "immich")
-                    + ["mirror_immich@127.0.0.1", "mirror-probe"]
+                    ssh_args(sender, mirror.directory, "immich") + ["mirror_immich@127.0.0.1", "mirror-probe"]
                 )
             except ValueError:
                 pass

@@ -735,3 +735,10 @@ summary {
 .mirror-source .form-grid { margin-top: 12px; }
 #l4-dialog textarea { overflow-wrap: anywhere; }
 @media(max-width: 640px) { .mirror-facts { grid-template-columns: 1fr; gap: 16px; } .mirror-card .section-heading { align-items: flex-start; flex-direction: column; } }
+
+.mirror-receiving { border:1px solid var(--line); border-radius:14px; padding:16px; margin:14px 0; overflow-wrap:anywhere; }
+.mirror-receiving strong, .mirror-receiving small { display:block; margin-bottom:8px; }
+.mirror-receiving progress { display:block; width:100%; height:12px; accent-color:var(--blue); margin:12px 0; }
+.mirror-events { padding:0; list-style:none; max-height:310px; overflow-y:auto; }
+.mirror-events li { border-bottom:1px solid var(--line); padding:10px 0; font-size:12px; overflow-wrap:anywhere; }
+.mirror-events time { display:block; color:var(--muted); margin-bottom:5px; }

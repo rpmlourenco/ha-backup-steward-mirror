@@ -5,7 +5,7 @@
 Espelho remoto direto de ficheiros, recebido do Data Steward por **rsync sobre SSH**.
 Uma app HAOS dedicada ao HA2 que ficará em Lisboa, com configuração guiada por ingress.
 
-**Experimental 0.1.1.** A receção começa desativada e a porta de dados não é publicada
+**Experimental 0.1.2.** A receção começa desativada e a porta de dados não é publicada
 por defeito. A instalação e a configuração de rede são manuais; publicar este
 repositório não instala nem modifica nenhum HA.
 
@@ -123,3 +123,24 @@ amostra. Um build ARM64 e testes de contentor não substituem essa aceitação.
 
 MIT. OpenSSH e rsync/rrsync são dependências dos pacotes Debian e mantêm as suas
 licenças upstream. O ícone e o estilo visual derivam do Data Steward original (MIT).
+
+## Logs e atividade (0.1.2)
+
+Os logs da app incluem data, hora e offset ISO 8601. O fuso é configurável na
+interface (`timezone`, por defeito `Europe/Madrid`). Cada origem regista início da
+comparação sem escrita, início de receção, atividade até uma vez por minuto,
+conclusão/falha/interrupção e duração. O texto das mensagens é fixo e os identificadores
+são os nomes de origem configurados; não são emitidos nomes de ficheiros ou chaves.
+
+A interface mostra fase, início, duração, última atualização e até 24 eventos recentes
+agregados. O registo de cada origem é limitado a 12 eventos em `/run` e pode desaparecer
+quando o contentor é recriado; não é um arquivo permanente de auditoria. Uma leitura
+parcial da telemetria mantém a última amostra válida, e um processo que desaparece é
+mostrado como interrompido. A comparação dry-run distingue-se de uma receção de dados.
+
+Os contadores detalhados de bytes, ficheiros, ritmo e ETA estão no emissor, que tem
+os contadores reais do rsync. O recetor não percorre a biblioteca para calcular uma
+percentagem nem intercepta os descritores de dados do protocolo.
+
+Atualiza manualmente as apps depois de a sincronização atual terminar: uma atualização
+pode reiniciar o contentor. Esta versão não altera as chaves nem a política do espelho.

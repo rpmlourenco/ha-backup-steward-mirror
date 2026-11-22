@@ -7,6 +7,7 @@ from aiohttp import web
 
 from . import VERSION
 from .policy import validate
+from .activity import Reader
 
 STATIC = Path(__file__).parent / "static"
 
@@ -24,6 +25,7 @@ def save(path, value):
 
 def application(cfg, config_path, host_identity, process=None, startup_error=None):
     saved = dict(cfg)
+    activity_reader = Reader()
 
     @web.middleware
     async def protect(request, handler):
@@ -45,20 +47,7 @@ def application(cfg, config_path, host_identity, process=None, startup_error=Non
 
     async def status(request):
         running = process is not None and process.poll() is None
-        activity = []
-        for item in cfg["sources"]:
-            path = Path("/run/mirror/activity") / (item["name"] + ".json")
-            try:
-                content = json.loads(path.read_text(encoding="utf-8")[:4096])
-                activity.append(
-                    {
-                        "name": item["name"],
-                        "status": content.get("status"),
-                        "time": content.get("time"),
-                    }
-                )
-            except OSError, ValueError:
-                activity.append({"name": item["name"], "status": "waiting"})
+        activity = [activity_reader.get(item["name"]) for item in cfg["sources"]]
         return web.json_response(
             {
                 "version": VERSION,
@@ -68,6 +57,7 @@ def application(cfg, config_path, host_identity, process=None, startup_error=Non
                 "error": startup_error,
                 "sources": activity,
                 "config": saved,
+                "timezone": cfg["timezone"],
             }
         )
 

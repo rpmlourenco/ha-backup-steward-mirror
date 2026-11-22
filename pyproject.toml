@@ -1,6 +1,6 @@
 [project]
 name = "ha-backup-steward-mirror"
-version = "0.1.1"
+version = "0.1.2"
 description = "Direct rsync/SSH mirror receiver for Home Assistant OS"
 requires-python = ">=3.14"
 

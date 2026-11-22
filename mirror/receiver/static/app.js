@@ -2,6 +2,29 @@
   const $ = id => document.getElementById(id);
   let ready = false, config, sources = [], polling = false;
   const controls = ["save", "import", "identity", "copy", "disks"];
+  function renderActivity(status) {
+    const stamp = value => value ? new Date(value).toLocaleString("pt-PT",{timeZone:status.timezone || "Europe/Madrid"}) : "—";
+    const names={waiting:"A aguardar",planning:"A comparar alterações",receiving:"A receber",success:"Operação concluída",failed:"Operação falhou",interrupted:"Operação interrompida"};
+    $("activity").replaceChildren(); $("recent-events").replaceChildren();
+    const events=[];
+    for(const item of status.sources){
+      const card=document.createElement("div");card.className="mirror-receiving";
+      const title=document.createElement("strong");title.textContent=`${item.name} · ${names[item.status]||"A aguardar"}`;
+      const updated=document.createElement("small");updated.textContent=`Atualização: ${stamp(item.time)}`;
+      const bar=document.createElement("progress");bar.max=100;bar.setAttribute("aria-label",`Progresso de ${item.name}`);
+      if(item.status==="success")bar.value=100;
+      const detail=document.createElement("p"); const elapsed=item.elapsed_seconds||0; detail.textContent=`Tempo decorrido: ${Math.floor(elapsed/3600)}h ${Math.floor(elapsed%3600/60)}m ${elapsed%60}s · Início: ${stamp(item.started_at)}`;
+      const note=document.createElement("small");note.textContent=item.operation==="planning"?"Comparação sem envio de ficheiros.":"Os contadores detalhados de transferência estão na app emissora.";
+      card.append(title,updated); if(item.status!=="waiting")card.append(bar,detail,note); $("activity").append(card);
+      for(const event of item.events||[])events.push({...event,source:item.name});
+    }
+    events.sort((a,b)=>new Date(a.time||0)-new Date(b.time||0));
+    for(const event of events.slice(-24)){
+      const row=document.createElement("li"),time=document.createElement("time"),text=document.createElement("span");
+      time.textContent=stamp(event.time);text.textContent=`${event.source}: ${event.message}${Number.isFinite(event.elapsed_seconds)?" · "+event.elapsed_seconds+" s":""}`;row.append(time,text);$("recent-events").append(row);
+    }
+    if(!events.length){const row=document.createElement("li");row.textContent="Os eventos da próxima operação aparecem aqui.";$("recent-events").append(row);}
+  }
   function lock() { ready = false; controls.forEach(id => $(id).disabled = true); }
   async function api(path, method="GET", body) {
     const response = await fetch(`v1/${path}`, {method, signal:AbortSignal.timeout(15000), headers:{"Content-Type":"application/json", "X-Steward-UI":"1"}, body:body === undefined ? undefined : JSON.stringify(body)});
@@ -36,9 +59,7 @@
       $("description").textContent=status.listening?"Alicante pode enviar as origens autorizadas, diretamente por SSH.":"Confirma o disco, importa as chaves e ativa a receção quando estiveres pronto.";
       $("notice").hidden=!status.restart_required&&!status.error;
       $("notice").textContent=status.restart_required?"Configuração guardada. Reinicia manualmente esta app para aplicar as alterações. O recetor continua com a configuração do último arranque.":status.error||"";
-      $("activity").replaceChildren();
-      const names={waiting:"A aguardar",receiving:"A receber ou comparar",success:"Última operação concluída",failed:"Última operação falhou"};
-      for(const item of status.sources){const p=document.createElement("p");p.textContent=`${item.name} · ${names[item.status]||"A aguardar"}${item.time?" · "+new Date(item.time).toLocaleString("pt-PT"):""}`;$("activity").append(p);}
+      renderActivity(status);
     } catch { lock();$("status-label").textContent="Ligação indisponível";$("description").textContent="Aguarda a confirmação do estado antes de alterar a configuração."; }
     finally {polling=false;}
   }

@@ -119,4 +119,6 @@ LogLevel ERROR
     path = RUN / "sshd_config"
     path.write_text(config, encoding="utf-8")
     subprocess.run(["sshd", "-t", "-f", str(path)], check=True, capture_output=True)
-    return subprocess.Popen(["/usr/sbin/sshd", "-D", "-e", "-f", str(path)])
+    return subprocess.Popen(
+        ["/usr/sbin/sshd", "-D", "-e", "-f", str(path)], stderr=subprocess.PIPE, text=True
+    )

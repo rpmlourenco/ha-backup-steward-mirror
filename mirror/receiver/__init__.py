@@ -1,3 +1,3 @@
 """Data Steward Mirror: direct, confined rsync reception."""
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
