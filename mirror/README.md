@@ -8,5 +8,4 @@ A receção começa desativada. Abre a interface para escolher o disco, importar
 chaves públicas de Alicante e preparar a identidade deste recetor. A instalação,
 montagem do disco e configuração de rede são manuais.
 
-Experimental: valida o hardware e um restauro de amostra antes da utilização real.
 Consulta o separador Documentação para os passos de configuração.

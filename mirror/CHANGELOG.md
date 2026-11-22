@@ -1,3 +1,7 @@
+## 0.1.3
+
+- Remove the experimental label from app metadata and current documentation.
+
 ## 0.1.2
 
 - Add ISO date/time/offset to app and transfer-session logs, with configurable timezone.

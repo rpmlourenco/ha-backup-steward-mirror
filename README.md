@@ -5,7 +5,7 @@
 Espelho remoto direto de ficheiros, recebido do Data Steward por **rsync sobre SSH**.
 Uma app HAOS dedicada ao HA2 que ficará em Lisboa, com configuração guiada por ingress.
 
-**Experimental 0.1.2.** A receção começa desativada e a porta de dados não é publicada
+**Versão 0.1.3.** A receção começa desativada e a porta de dados não é publicada
 por defeito. A instalação e a configuração de rede são manuais; publicar este
 repositório não instala nem modifica nenhum HA.
 
