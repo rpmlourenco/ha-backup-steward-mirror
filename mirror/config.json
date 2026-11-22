@@ -1,0 +1,57 @@
+{
+  "name": "Data Steward Mirror",
+  "version": "0.1.0",
+  "slug": "backup_steward_mirror",
+  "description": "Espelho direto por rsync/SSH com configuração guiada e chaves por origem.",
+  "url": "https://github.com/rpmlourenco/ha-backup-steward-mirror",
+  "arch": [
+    "aarch64",
+    "amd64"
+  ],
+  "startup": "application",
+  "boot": "manual",
+  "stage": "experimental",
+  "init": true,
+  "timeout": 120,
+  "ingress": true,
+  "ingress_port": 8099,
+  "panel_icon": "mdi:folder-sync-outline",
+  "panel_title": "Steward Mirror",
+  "map": [
+    {
+      "type": "media",
+      "read_only": false
+    }
+  ],
+  "udev": true,
+  "ports": {
+    "2222/tcp": null
+  },
+  "ports_description": {
+    "2222/tcp": "SSH exclusivo para rsync. Define aqui a porta no HA2 e encaminha-a no router."
+  },
+  "backup": "cold",
+  "options": {
+    "enabled": false,
+    "label": "Lisboa",
+    "mount": "/media/mirror",
+    "uuid": "",
+    "port": 2222,
+    "min_free_gib": 20,
+    "sources": []
+  },
+  "schema": {
+    "enabled": "bool",
+    "label": "str",
+    "mount": "str",
+    "uuid": "str",
+    "port": "port",
+    "min_free_gib": "int(1,100000)",
+    "sources": [
+      {
+        "name": "str",
+        "public_key": "str"
+      }
+    ]
+  }
+}

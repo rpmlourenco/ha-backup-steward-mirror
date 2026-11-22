@@ -1,0 +1,36 @@
+name: Validate mirror
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t steward-mirror:test mirror
+      - run: docker run --rm -v "$PWD:/workspace:ro" -w /workspace -e PYTHONPATH=mirror steward-mirror:test python -B -m unittest discover -s tests -v
+      - run: docker run --rm --entrypoint /bin/sh steward-mirror:test -c 'command -v rrsync && sshd -V && rsync --version'
+  arm-build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t steward-mirror:arm64 mirror
+
+  ui:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: python -m pip install playwright==1.62.0 ruff
+      - run: ruff check .
+      - name: Select test browser
+        run: |
+          ui_browser_path="$(command -v google-chrome || command -v chromium || true)"
+          if [ -n "$ui_browser_path" ]; then
+            echo "STEWARD_TEST_BROWSER=$ui_browser_path" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+          fi
+      - run: python tests/ui.py
