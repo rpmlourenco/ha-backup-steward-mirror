@@ -20,3 +20,14 @@ disk permissions, published SSH port, direct LAN/WAN connectivity, real throughp
 application-consistent input preparation and recovery of a representative sample.
 No HA credentials, real disks, host devices or HA configuration were mapped into
 the test containers. No live transfer or network configuration was performed.
+
+## 0.1.1 — explicit internal storage
+
+- Eight unit tests pass, including explicit internal mode, backing UUID mismatch,
+  rejection of a different mount and preserved dedicated-disk fail-closed behavior.
+- Real SSH/rsync container acceptance and Chrome desktop/mobile setup pass.
+- AMD64 and ARM64 images build successfully; Ruff and Git whitespace checks pass.
+- Read-only SSH inspection on HA2 confirms `/media` is ext4 on the internal NVMe
+  and its UUID is readable as UID 65534 inside the installed app. No mount, restart,
+  data transfer or disk write was used for this inspection.
+- Internal storage is an explicit option; upgrades retain dedicated mode until chosen.

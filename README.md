@@ -5,7 +5,7 @@
 Espelho remoto direto de ficheiros, recebido do Data Steward por **rsync sobre SSH**.
 Uma app HAOS dedicada ao HA2 que ficará em Lisboa, com configuração guiada por ingress.
 
-**Experimental 0.1.0.** A receção começa desativada e a porta de dados não é publicada
+**Experimental 0.1.1.** A receção começa desativada e a porta de dados não é publicada
 por defeito. A instalação e a configuração de rede são manuais; publicar este
 repositório não instala nem modifica nenhum HA.
 
@@ -33,8 +33,9 @@ histórico adicional. O L3 offline mantém a sua função de recuperação de ve
    **Definições → Apps → Loja de apps → Repositórios**. Instala **Data Steward Mirror**.
    Inicia a app e abre a interface por ingress. Como alternativa, instala manualmente
    a pasta `mirror/` como app local.
-2. Monta manualmente um disco ext4 dedicado no HA2. Escolhe o ponto de montagem
-   diretamente em `/media`, por exemplo `/media/mirror`, e confirma o UUID.
+2. Escolhe **NVMe / armazenamento interno do HA2** para guardar no volume interno,
+   ou **Disco dedicado** para um disco ext4 montado manualmente. Escolhe a pasta
+   diretamente em `/media`, por exemplo `/media/mirror`, e confirma o UUID do volume.
    A lista de discos faz apenas deteção de leitura. Se a identidade não estiver
    visível à app, a receção bloqueia: não substituas a validação por um bypass.
 3. No Data Steward original, abre **Configurar espelho**, seleciona as origens,
@@ -81,7 +82,9 @@ não permite este caminho de entrada direto.
 - Links simbólicos recebidos são neutralizados por `--munge-links`; o espelho
   destina-se a ficheiros e diretórios de dados, não a reproduzir links executáveis,
   dispositivos, proprietários, ACL ou ficheiros especiais de um sistema operativo.
-- O UUID ext4, a montagem exata, o modo de escrita e o espaço livre são confirmados
+- No modo dedicado, exige-se a montagem exata do disco; no modo interno, exige-se
+  o volume `/media` com o UUID selecionado. Não há fallback entre modos.
+- O UUID ext4, o modo de escrita e o espaço livre são confirmados
   antes de cada sessão. Não há permissões para montar/desmontar/desligar discos.
 - A raiz do disco deve pertencer a root, permitir travessia/leitura e impedir
   escrita de outros utilizadores. As subpastas novas são preparadas pela app;

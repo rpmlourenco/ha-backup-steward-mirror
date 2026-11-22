@@ -1,3 +1,9 @@
+## 0.1.1
+
+- Add explicit internal HAOS/NVMe storage mode with pinned backing filesystem UUID.
+- Discover internal storage in guided setup; create only the confined receiver folder on activation.
+- Preserve exact-mount validation for dedicated disks; no fallback between storage modes.
+
 ## 0.1.0
 
 - Initial experimental rsync/SSH receiver with guided ingress configuration.

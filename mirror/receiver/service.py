@@ -25,9 +25,7 @@ def identity(port):
         )
     os.chmod(key, 0o600)
     public = (
-        subprocess.run(
-            ["ssh-keygen", "-y", "-f", str(key)], check=True, capture_output=True
-        )
+        subprocess.run(["ssh-keygen", "-y", "-f", str(key)], check=True, capture_output=True)
         .stdout.decode("utf-8")
         .strip()
     )
@@ -36,6 +34,11 @@ def identity(port):
 
 def start(cfg):
     validate_mount(cfg)
+    root = Path(cfg["mount"])
+    if cfg.get("storage_mode") == "internal" and not root.exists():
+        # Only after confirming the explicitly selected /media backing UUID.
+        root.mkdir(mode=0o755)
+    confined_root(cfg, cfg["sources"][0]["name"])
     parent = Path(cfg["mount"]).stat()
     if parent.st_uid != 0 or parent.st_mode & 0o022 or parent.st_mode & 0o005 != 0o005:
         raise ValueError(
@@ -110,9 +113,7 @@ LoginGraceTime 20
 MaxStartups 5:30:10
 LogLevel ERROR
 """
-    config += (
-        "AllowUsers " + " ".join("mirror_" + i["name"] for i in cfg["sources"]) + "\n"
-    )
+    config += "AllowUsers " + " ".join("mirror_" + i["name"] for i in cfg["sources"]) + "\n"
     for item in cfg["sources"]:
         config += f"\nMatch User mirror_{item['name']}\n    ForceCommand /usr/local/bin/python /app/receive.py {item['name']}\n"
     path = RUN / "sshd_config"

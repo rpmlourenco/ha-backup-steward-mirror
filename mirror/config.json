@@ -1,6 +1,6 @@
 {
   "name": "Data Steward Mirror",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "slug": "backup_steward_mirror",
   "description": "Espelho direto por rsync/SSH com configuração guiada e chaves por origem.",
   "url": "https://github.com/rpmlourenco/ha-backup-steward-mirror",
@@ -38,7 +38,8 @@
     "uuid": "",
     "port": 2222,
     "min_free_gib": 20,
-    "sources": []
+    "sources": [],
+    "storage_mode": "dedicated"
   },
   "schema": {
     "enabled": "bool",
@@ -52,6 +53,7 @@
         "name": "str",
         "public_key": "str"
       }
-    ]
+    ],
+    "storage_mode": "list(dedicated|internal)"
   }
 }

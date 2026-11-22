@@ -12,16 +12,14 @@ from receiver.policy import validate
 from receiver.server import application
 from receiver.storage import validate_mount
 
-KEY = (
-    "ssh-ed25519 "
-    + base64.b64encode(b"\0\0\0\x0bssh-ed25519\0\0\0\x20" + bytes(32)).decode()
-)
+KEY = "ssh-ed25519 " + base64.b64encode(b"\0\0\0\x0bssh-ed25519\0\0\0\x20" + bytes(32)).decode()
 UUID = "11111111-1111-4111-8111-111111111111"
 
 
 class PolicyTests(unittest.TestCase):
     def test_disabled_defaults(self):
         self.assertFalse(validate({})["enabled"])
+        self.assertEqual(validate({})["storage_mode"], "dedicated")
 
     def test_reject_invalid_sources_and_destinations(self):
         for raw in (
@@ -31,6 +29,7 @@ class PolicyTests(unittest.TestCase):
             {"enabled": True},
             {"uuid": "wrong"},
             {"port": True},
+            {"storage_mode": "automatic"},
             {"sources": [{"name": "../../etc", "public_key": KEY}]},
             {"sources": [{"name": "immich", "public_key": "restrict " + KEY}]},
         ):
@@ -60,6 +59,7 @@ class PolicyTests(unittest.TestCase):
                 self.assertRaises(ValueError),
             ):
                 validate_mount(cfg)
+
         with (
             patch("receiver.storage.inspect", return_value=good),
             patch("receiver.storage.shutil.disk_usage") as usage,
@@ -67,6 +67,28 @@ class PolicyTests(unittest.TestCase):
             usage.return_value.free = 0
             with self.assertRaises(ValueError):
                 validate_mount(cfg)
+
+    def test_internal_storage_requires_its_explicit_mode_and_pinned_uuid(self):
+        internal = {"mount": "/media", "filesystem": "ext4", "writable": True, "uuid": UUID}
+        with (
+            patch("receiver.storage.inspect", return_value=internal),
+            patch("receiver.storage.shutil.disk_usage") as usage,
+        ):
+            usage.return_value.free = 100 * 1024**3
+            self.assertEqual(
+                validate_mount(validate({"uuid": UUID, "storage_mode": "internal"})), 100 * 1024**3
+            )
+            with self.assertRaises(ValueError):
+                validate_mount(validate({"uuid": UUID}))
+            with self.assertRaises(ValueError):
+                validate_mount(
+                    validate({"uuid": "22222222-2222-4222-8222-222222222222", "storage_mode": "internal"})
+                )
+
+    def test_internal_mode_rejects_a_different_mount_even_with_the_same_uuid(self):
+        record = {"mount": "/media/mirror", "filesystem": "ext4", "writable": True, "uuid": UUID}
+        with patch("receiver.storage.inspect", return_value=record), self.assertRaises(ValueError):
+            validate_mount(validate({"uuid": UUID, "storage_mode": "internal"}))
 
 
 class HTTPTests(unittest.IsolatedAsyncioTestCase):
@@ -98,9 +120,7 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
                     status = await (await client.get("/v1/status")).json()
                     self.assertTrue(status["restart_required"])
                     self.assertFalse(status["listening"])
-                    self.assertEqual(
-                        json.loads(path.read_text(encoding="utf-8"))["label"], "HA2"
-                    )
+                    self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["label"], "HA2")
 
     async def test_public_identity_and_no_arbitrary_actions(self):
         with (
@@ -117,9 +137,7 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
                 )
             ) as client:
                 data = await (
-                    await client.post(
-                        "/v1/identity", json={}, headers={"X-Steward-UI": "1"}
-                    )
+                    await client.post("/v1/identity", json={}, headers={"X-Steward-UI": "1"})
                 ).json()
                 self.assertEqual(data["host_key"], KEY)
                 self.assertNotIn("private", str(data))

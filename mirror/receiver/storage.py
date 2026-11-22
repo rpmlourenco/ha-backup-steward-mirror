@@ -1,6 +1,7 @@
 """Read-only disk identity checks, repeated by each receiving account."""
 
 import json
+from pathlib import Path
 import shutil
 import subprocess
 
@@ -22,18 +23,19 @@ def inspect(path):
 
 
 def validate_mount(cfg):
-    record = inspect(cfg["mount"])
-    if (
-        record["mount"] != cfg["mount"]
-        or record["filesystem"] != "ext4"
-        or not record["writable"]
-    ):
+    root = Path(cfg["mount"])
+    if root.is_symlink() or root.resolve() != root:
+        raise ValueError("O caminho do destino não pode atravessar links simbólicos.")
+    internal = cfg.get("storage_mode", "dedicated") == "internal"
+    expected = "/media" if internal else cfg["mount"]
+    record = inspect(root if root.exists() else expected)
+    if record["mount"] != expected or record["filesystem"] != "ext4" or not record["writable"]:
         raise ValueError(
-            "É necessário um destino ext4 montado exatamente no caminho escolhido, em leitura/escrita."
+            "A montagem ext4 não corresponde ao tipo de armazenamento escolhido, ou está em leitura apenas."
         )
     if record["uuid"].lower() != cfg["uuid"].lower() or not record["uuid"]:
         raise ValueError("O UUID do disco não corresponde. A receção fica bloqueada.")
-    free = shutil.disk_usage(cfg["mount"]).free
+    free = shutil.disk_usage(root if root.exists() else expected).free
     if free < cfg["min_free_gib"] * 1024**3:
         raise ValueError("O destino não tem o espaço livre mínimo.")
     return free

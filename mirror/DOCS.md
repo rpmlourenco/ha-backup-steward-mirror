@@ -3,7 +3,9 @@
 Abre a interface da app para configurar o disco, importar as chaves públicas de
 Alicante e exportar a identidade do recetor. A receção começa desativada.
 
-1. Escolhe o disco ext4 e confirma o UUID.
+1. Escolhe armazenamento interno/NVMe ou disco dedicado e confirma o UUID do volume.
+   No modo interno, usa uma pasta como `/media/mirror`; é criada quando ativares
+   e reiniciares a app, depois de validar a identidade do volume.
 2. Importa o emparelhamento público do Data Steward de origem.
 3. Define a porta SSH pública e publica manualmente a porta interna 2222/TCP
    no separador Rede. Configura o router/firewall manualmente.

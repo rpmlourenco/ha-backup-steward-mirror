@@ -11,6 +11,7 @@ DEFAULTS = {
     "enabled": False,
     "label": "Lisboa",
     "mount": "/media/mirror",
+    "storage_mode": "dedicated",
     "uuid": "",
     "port": 2222,
     "min_free_gib": 20,
@@ -24,6 +25,8 @@ def validate(raw):
     cfg = dict(copy.deepcopy(DEFAULTS), **copy.deepcopy(raw))
     if type(cfg["enabled"]) is not bool:
         raise ValueError("Ativar receção deve ser um interruptor.")
+    if cfg["storage_mode"] not in ("dedicated", "internal"):
+        raise ValueError("Escolhe disco dedicado ou armazenamento interno.")
     if not isinstance(cfg["label"], str) or not 1 <= len(cfg["label"]) <= 60:
         raise ValueError("Indica um nome para este destino.")
     path = PurePosixPath(cfg["mount"])
@@ -37,7 +40,7 @@ def validate(raw):
     if cfg["uuid"]:
         try:
             uuid.UUID(cfg["uuid"])
-        except (ValueError, TypeError, AttributeError):
+        except ValueError, TypeError, AttributeError:
             raise ValueError("O UUID do destino não é válido.") from None
     for key, lo, hi in (("port", 1, 65535), ("min_free_gib", 1, 100000)):
         if type(cfg[key]) is not int or not lo <= cfg[key] <= hi:
@@ -48,17 +51,12 @@ def validate(raw):
     for item in cfg["sources"]:
         if not isinstance(item, dict) or set(item) != {"name", "public_key"}:
             raise ValueError("Cada origem precisa de nome e chave pública.")
-        if (
-            not re.fullmatch(r"[a-z][a-z0-9_]{0,23}", item["name"])
-            or item["name"] in names
-        ):
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,23}", item["name"]) or item["name"] in names:
             raise ValueError("Usa nomes únicos em minúsculas, até 24 caracteres.")
         names.add(item["name"])
         item["public_key"] = public_key(item["public_key"])
     if cfg["enabled"] and (not cfg["uuid"] or not cfg["sources"]):
-        raise ValueError(
-            "Confirma o UUID e importa as chaves antes de ativar a receção."
-        )
+        raise ValueError("Confirma o UUID e importa as chaves antes de ativar a receção.")
     return cfg
 
 

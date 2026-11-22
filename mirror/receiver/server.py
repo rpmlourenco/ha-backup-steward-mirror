@@ -29,18 +29,13 @@ def application(cfg, config_path, host_identity, process=None, startup_error=Non
     async def protect(request, handler):
         if request.remote != os.environ.get("MIRROR_INGRESS_IP", "172.30.32.2"):
             raise web.HTTPForbidden(text="Abre esta app pelo Home Assistant.")
-        if (
-            request.method not in ("GET", "HEAD")
-            and request.headers.get("X-Steward-UI") != "1"
-        ):
+        if request.method not in ("GET", "HEAD") and request.headers.get("X-Steward-UI") != "1":
             raise web.HTTPForbidden()
         try:
             response = await handler(request)
-        except (ValueError, TypeError, KeyError):
+        except ValueError, TypeError, KeyError:
             return web.json_response(
-                {
-                    "error": "Configuração inválida. Confirma os campos, nomes e chaves públicas."
-                },
+                {"error": "Configuração inválida. Confirma os campos, nomes e chaves públicas."},
                 status=400,
             )
         response.headers["Cache-Control"] = "no-store"
@@ -62,7 +57,7 @@ def application(cfg, config_path, host_identity, process=None, startup_error=Non
                         "time": content.get("time"),
                     }
                 )
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 activity.append({"name": item["name"], "status": "waiting"})
         return web.json_response(
             {
@@ -86,25 +81,25 @@ def application(cfg, config_path, host_identity, process=None, startup_error=Non
     async def pairing(request):
         if await request.json() != {}:
             raise ValueError("Esperado objeto vazio.")
-        return web.json_response(
-            dict(host_identity(saved["port"]), uuid=saved["uuid"], label=saved["label"])
-        )
+        return web.json_response(dict(host_identity(saved["port"]), uuid=saved["uuid"], label=saved["label"]))
 
     async def disks(request):
         from .storage import inspect
 
         candidates = []
+        try:
+            internal = inspect("/media")
+            if internal["mount"] == "/media" and internal["filesystem"] == "ext4" and internal["uuid"]:
+                candidates.append(dict(internal, mount="/media/mirror", storage_mode="internal"))
+        except Exception:
+            pass
         for child in sorted(Path("/media").iterdir()):
             if child.is_symlink() or not child.is_dir():
                 continue
             try:
                 record = inspect(child)
-                if (
-                    record["mount"] == str(child)
-                    and record["filesystem"] == "ext4"
-                    and record["uuid"]
-                ):
-                    candidates.append(record)
+                if record["mount"] == str(child) and record["filesystem"] == "ext4" and record["uuid"]:
+                    candidates.append(dict(record, storage_mode="dedicated"))
             except Exception:
                 continue
         return web.json_response({"disks": candidates})

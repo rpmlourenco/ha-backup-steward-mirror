@@ -54,7 +54,7 @@
   };
   $("identity").onclick=async()=>{if(!ready)return;try{$("identity-value").value=JSON.stringify(await api("identity","POST",{}),null,2);$("identity-value").hidden=$("copy").hidden=false;$("copy").disabled=false;}catch(e){$("error").textContent=e.message;}};
   $("copy").onclick=async()=>{if(!ready)return;try{await navigator.clipboard.writeText($("identity-value").value);}catch{$("identity-value").select();}};
-  $("disks").onchange=()=>{if(!ready)return;try{const disk=JSON.parse($("disks").value);$("settings").elements.mount.value=disk.mount;$("settings").elements.uuid.value=disk.uuid;}catch{/* Manual entry remains available. */}};
-  async function load(){await refresh(true);if(ready)try{const data=await api("disks");for(const disk of data.disks){const option=document.createElement("option");option.value=JSON.stringify(disk);option.textContent=`${disk.mount} · ext4`;$("disks").append(option);}}catch{/* Optional discovery cannot block manual setup. */}}
+  $("disks").onchange=()=>{if(!ready)return;try{const disk=JSON.parse($("disks").value);$("settings").elements.storage_mode.value=disk.storage_mode||"dedicated";$("settings").elements.mount.value=disk.mount;$("settings").elements.uuid.value=disk.uuid;}catch{/* Manual entry remains available. */}};
+  async function load(){await refresh(true);if(ready)try{const data=await api("disks");for(const disk of data.disks){const option=document.createElement("option");option.value=JSON.stringify(disk);option.textContent=`${disk.storage_mode==="internal"?"Armazenamento interno":"Disco dedicado"} · ${disk.mount} · ext4`;$("disks").append(option);}}catch{/* Optional discovery cannot block manual setup. */}}
   load();setInterval(refresh,5000);
 })();
